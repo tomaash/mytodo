@@ -14,24 +14,24 @@
 -->
 
 	<!-- The application identifier string, unique to this application. Required. -->
-	<id>todo</id>
+	<id>MyToDo</id>
 
 	<!-- Used as the filename for the application. Required. -->
-	<filename>todo</filename>
+	<filename>mytodo</filename>
 
 	<!-- The name that is displayed in the AIR application installer. 
 	     May have multiple values for each language. See samples or xsd schema file. Optional. -->
-	<name>todo</name>
+	<name>MyToDo</name>
 
 	<!-- An application version designator (such as "v1", "2.5", or "Alpha 1"). Required. -->
-	<version>v1</version>
+	<version>0.1</version>
 
 	<!-- Description, displayed in the AIR application installer.
 	     May have multiple values for each language. See samples or xsd schema file. Optional. -->
-	<!-- <description></description> -->
+	<description>Diz is a very nice thingy, yo need it very much - click and dunt worry man</description>
 
 	<!-- Copyright information. Optional -->
-	<!-- <copyright></copyright> -->
+  <copyright>Mugen labs 2008</copyright>
 
 	<!-- Settings for the application's initial window. Required. -->
 	<initialWindow>
@@ -58,7 +58,7 @@
 		<!-- <maximizable></maximizable> -->
 
 		<!-- Whether the user can resize the window. Optional. Default true. -->
-		<!-- <resizable></resizable> -->
+    <resizable>false</resizable>
 
 		<!-- The window's initial width. Optional. -->
 		<!-- <width></width> -->
@@ -87,12 +87,11 @@
 
 	<!-- The icon the system uses for the application. For at least one resolution,
 		 specify the path to a PNG file included in the AIR package. Optional. -->
-	<!-- <icon>
-		<image16x16></image16x16>
-		<image32x32></image32x32>
-		<image48x48></image48x48>
-		<image128x128></image128x128>
-	</icon> -->
+
+	<icon>
+		<image48x48>assets/images/mytodo-48x48.png</image48x48>
+		<image128x128>assets/images/mytodo-128x128.png</image128x128>
+	</icon>
 
 	<!-- Whether the application handles the update when a user double-clicks an update version
 	of the AIR file (true), or the default AIR application installer handles the update (false).
