@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:WindowedApplication xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" 
+	title="MyToDo" width="240" height="407" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+    <mx:Script> 
+        <![CDATA[ 
+            import mx.controls.Alert; 
+            public function showInfo():void 
+            { 
+                if (itemInput.text) {
+	                listData=listData.concat([itemInput.text]);
+	                itemInput.text="";                             	
+                }
+              
+            }
+
+            [Bindable] 
+	        public var listData:Array = []; 
+
+        ]]> 
+    </mx:Script> 
+
+    <mx:TextInput x="10" y="10" id="itemInput"/>
+    <mx:Button x="178" y="10" label="Add" id="addButon" click="showInfo()"/>
+    <mx:List x="10" y="40" width="217" height="311" id="itemList" dataProvider="{listData}"></mx:List>
+</mx:WindowedApplication>
