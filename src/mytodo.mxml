@@ -1,45 +1,207 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:WindowedApplication xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" 
-	title="MyToDo" width="306" height="493" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+	title="MyToDo" width="304" height="457" horizontalScrollPolicy="off" verticalScrollPolicy="off" 
+	showStatusBar="false" applicationComplete="open();" >
     <mx:Script> 
-        <![CDATA[ 
-            import mx.controls.Alert; 
-            public function addItem():void 
-            { 
+        <![CDATA[
+        /*
+ * Naive database backend for MyTODO.
+ */
+
+import flash.data.SQLResult;
+import flash.filesystem.File;
+import flash.data.SQLStatement;
+import flash.data.SQLConnection;
+import flash.events.SQLEvent;
+import flash.events.SQLErrorEvent;
+import mx.controls.Alert; 
+
+public var db_conn 	: SQLConnection;
+public var db_file 	: File;
+public var db_cmd 	: SQLStatement;
+
+[Bindable]
+public var db_items : Array = [];
+
+
+/*
+ * Open database, create if absent. Fill 'db_items'.
+ */
+
+public function
+open() : void
+{
+//	File.applicationDirectory.resolvePath(_databaseFileName);
+	db_file = File.applicationDirectory.resolvePath('Todo.db'); //new File("app-storage:/Todo.db");
+	db_conn = new SQLConnection();
+	db_conn.addEventListener(SQLErrorEvent.ERROR, on_error);
+	db_conn.addEventListener(SQLEvent.OPEN, on_open);
+	db_conn.open(db_file);
+}
+
+private function
+on_open(event : SQLEvent) : void
+{
+	if (event.type == "open") {
+		db_ensure_table();
+    	}
+}
+
+private function
+on_error(event : SQLEvent) : void
+{
+	/* XXXfreza */
+}
+
+private function
+db_ensure_table() : void
+{
+	var create:String = "CREATE TABLE IF NOT EXISTS Items (id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT, done BOOL)";
+
+	db_command(create, db_read_items);
+}
+
+private function
+db_read_items(event:SQLEvent) : void
+{
+	db_command("SELECT * FROM Items", on_read_items);
+}
+
+private function
+on_read_items(event : SQLEvent) : void
+{
+	var result : SQLResult = db_cmd.getResult();
+
+	if (result != null) {
+		db_items = result.data;
+	}
+}
+
+/*
+ * Add item to database.
+ */
+
+private function
+add_item(label:String) : void
+{
+	var insert : String = "INSERT INTO Items(`label`,`done`) VALUES('" + label + "'," + false + ");"
+	db_command(insert, db_cond_refresh);
+}
+
+/*
+ * Remove item from database.
+ */
+
+private function
+del_item(ident : Number) : void
+{
+	var remove : String = "DELETE FROM Items WHERE id='" + ident + "';";
+
+	db_command(remove, db_cond_refresh);
+}
+
+/*
+ * Toggle item done property
+ */
+
+private function
+toggle_item(ident : Number) : void
+{
+	var remove : String = "update items set done = not done where id=" + ident + ";";
+
+	db_command(remove, db_cond_refresh);
+}
+
+/*
+ * Utility functions.
+ */
+
+/* Perform SQL statement 'query' with completion 'hook'. */
+private function
+db_command(query : String, hook : Function) : void
+{
+	/* XXXfreza let's hope we don't need to remove listeners */
+	db_cmd = new SQLStatement();
+	db_cmd.itemClass = Object;
+	db_cmd.sqlConnection = db_conn;
+	db_cmd.text = query;
+	db_cmd.addEventListener(SQLEvent.RESULT, hook);
+	db_cmd.execute();
+}
+
+/* Common 'db_command()' completion callback. */
+private function
+db_cond_refresh(event : SQLEvent) : void
+{
+	if (db_conn.totalChanges >= 1) {
+		db_read_items(event);
+	}
+}
+
+            public function addItem():void {
                 if (itemInput.text) {                        	
-	                listData=listData.concat([{pos:listData.length,label:itemInput.text,done:false}]);
-	                itemInput.text="";                             	
+	                add_item(itemInput.text);
+	                itemInput.text = "";                             	
                 }
-              
-            }
-            
-            public function toggleItem(pos:int):void {
-            	listData[pos].done=listData[pos].done ? false : true
-            }
-            
-            public function debugData():void 
-            {  
- 				data=listData.map(function(x:*, i:int, a:Array):String{ return x.pos+":"+x.label+":"+x.done })
- 				Alert.show(data.join("\n"))             
+                
             }
 
-            [Bindable] 
-	        public var listData:Array = []; 
+            public function toggleItem(id:int):void {
+            	toggle_item(id);
+            }
+            
+            public function delItem(id:int):void {
+            	del_item(id);
+            }
+
+            public function debugData():void {
+            	// oznaceni x:* znamena jakykoliv typ a je nepovinny  
+ 				data = db_items.map(function(x:*, i:int, a:Array):String { 
+ 						return x.id + ":" + x.label + ":" + x.done; 
+ 					 })
+ 				Alert.show(data.join("\n"))             
+            }
+            
+            public function factorialItem():void {
+		        var n:int=parseInt(itemInput.text);
+		        for (var j:int = 1; j <= 1000000; j++) {
+			        var result:int = 1;
+				        for (var i:int = 2; i <= n; i++) {
+	            			result *= i
+	        			}
+        		}
+        		Alert.show(String(result));
+            } 
+
+//            [Bindable] 
+//	        public var db_items:Array = []; 
 
         ]]> 
     </mx:Script> 
+    
 
-    <mx:TextInput x="10" y="66" id="itemInput" width="225" backgroundColor="#E6E6E6"/>
-    <mx:Button x="243" y="66" label="Add" id="addButon" click="addItem()" labelPlacement="left"/>
-    <mx:List x="10" y="96" width="282" height="325" id="itemList" dataProvider="{listData}" backgroundColor="#E6E6E6">
+    <mx:TextInput x="10" y="66" id="itemInput" width="247" backgroundColor="#E6E6E6" enter="addItem()" height="22"/>
+    <!--<mx:Button x="66" y="10" label="Add" id="addButon" click="addItem()" labelPlacement="left"/>-->
+    <mx:List x="10" y="96" width="282" height="325" id="itemList" dataProvider="{db_items}" backgroundColor="#E6E6E6">
     <mx:itemRenderer> 
         <mx:Component>   
-        <!-- mx component dela novy namespace, reference musim prefixovat "outerDocument" -->
-                <mx:CheckBox label="{data.label}" selected="{data.done}" click="outerDocument.toggleItem(data.pos)"/>
+        <!-- mx component je v jinem namespacu, reference musim prefixovat "outerDocument" -->
+        <mx:Grid>
+        <mx:GridRow width="100%" height="100%">
+            <mx:GridItem width="90%" height="100%">
+                <mx:CheckBox label="{data.label}" selected="{data.done}" click="outerDocument.toggleItem(data.id)"/>
+            </mx:GridItem>
+            <mx:GridItem width="10%" height="100%">
+                <mx:Image source="assets/images/remove.png" click="outerDocument.delItem(data.id)" verticalAlign="middle" buttonMode="true" />
+            </mx:GridItem>
+        </mx:GridRow>
+        </mx:Grid>  	        	                     
         </mx:Component> 
     </mx:itemRenderer> 
     </mx:List>
-    <mx:Button x="12" y="429" width="282" click="debugData()" height="20" labelPlacement="bottom" label="Debug"/>
+    <!--<mx:Button x="12" y="429" width="282" click="debugData()" height="20" labelPlacement="bottom" label="Debug"/>-->
     <mx:Image x="10" y="10" source="assets/images/mytodo-48x48.png"/>
     <mx:Text x="66" y="24" text="Here you can write your list items&#xd;" width="238" height="25" fontSize="13" fontAntiAliasType="advanced"/>
+    <mx:Image x="265" y="70" id="addButon" click="addItem()" source="assets/images/add.png" buttonMode="true"/>
+    <mx:Button x="192" y="36" label="Factorial" click="factorialItem()"/>
 </mx:WindowedApplication>
